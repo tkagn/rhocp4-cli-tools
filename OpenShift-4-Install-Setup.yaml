@@ -124,7 +124,8 @@
         - "/usr/local/bin/oc completion bash > /etc/bash_completion.d/oc-completion"
         - "/usr/local/bin/openshift-install completion bash > /etc/bash_completion.d/openshift-install-completion"
         - "/usr/local/bin/helm completion bash > /etc/bash_completion.d/helm-completion"
-      tags:
+        - "echo 'complete -C '/usr/local/bin/aws_completer' aws' >> /etc/bashrc"
+:      tags:
         - completion_scripts
 
 # Post 
