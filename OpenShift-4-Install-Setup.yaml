@@ -65,12 +65,19 @@
         - oc_client
 
     - name: Install oc into /usr/local/bin
-      command: "{{ item }}"
-      args:
-        chdir: "{{ temp_dir.path }}"
+      unarchive:
+        src: "{{ temp_dir.path }}/openshift-client-linux.tar.gz"
+        dest: "/usr/local/bin"
+      tags:
+        - oc_client
+
+    - name: Remove oc tar and readme file
+      file:
+        path: "{{ item }}"
+        state: absent
       with_items:
-        - "tar -xvf openshift-client-linux.tar.gz -C /usr/local/bin"
-        - "rm -f {{ temp_dir.path }}/openshift-client-linux.tar.gz /usr/local/bin/README.md"
+        - "/usr/local/bin/README.md"
+        - "{{ temp_dir.path }}/openshift-client-linux.tar.gz"
       tags:
         - oc_client
 
@@ -82,17 +89,23 @@
       tags:
         - openshift_installer
 
-
-    - name: Install openshift-install into /usr/local/bin
-      command: "{{ item }}"
-      args:
-        chdir: "{{ temp_dir.path }}"
-      with_items:
-        - "tar -xvf openshift-install-linux.tar.gz -C /usr/local/bin"
-        - "rm -f {{ temp_dir.path }}/openshift-install-linux.tar.gz /usr/local/bin/README.md"
+    - name: Untar openshift-install with unarchive module
+      unarchive:
+        src: "{{ temp_dir.path }}/openshift-install-linux.tar.gz"
+        dest: "/usr/local/bin"
       tags:
         - openshift_installer
-
+      
+    - name: Remove openshift-install tar and readme file
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "/usr/local/bin/README.md"
+        - "{{ temp_dir.path }}/openshift-install-linux.tar.gz"
+      tags:
+        - openshift_installer
+     
    # Helm Tool
     - name: Download and install the latest Helm tool
       get_url:
