@@ -7,54 +7,62 @@
 
   tasks:
 
+    # Setup temp and working directory
+
     - name: Get current_working_directory
       shell: pwd
       register: current_working_directory
+      tags:
+        - always
 
     - name: Generate temp directory in working directory
       file:
         path: "{{ current_working_directory.stdout }}/temp"
         state: directory
       register: temp_dir
+      tags:
+        - always
     
     - name: Print temp dir location
       debug:
-        msg: "The temp directory is {{ temp_dir }}"
+        msg: "The temp directory is {{ temp_dir.path }}"
+      tags:
+        - always
 
+
+    # Deploy AWS ClI v2 utility 
     - name: Download the latest AWS Command Line Interface
       get_url:
-        url: "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip"
-        dest: "{{ temp_dir.path }}/awscli-bundle.zip"
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+        dest: "{{ temp_dir.path }}/awscliv2.zip"
+      tags:
+        - aws_cli
+
+    - name: Unzip archive with unarchive module
+      unarchive:
+        src: "{{ temp_dir.path }}/awscliv2.zip"
+        dest: "{{ temp_dir.path }}"
       tags:
         - aws_cli
 
     - name: Install the AWS CLI into /bin/aws
-      command: "{{ item }}"
+      command:
       args:
         chdir: "{{ temp_dir.path }}"
+        cmd: "{{ item }}"
       with_items:
-        - "unzip -f awscli-bundle.zip"
-        - "awscli-bundle/install -i /usr/local/aws -b /bin/aws"
+        - "aws/install --update"
       tags:
         - aws_cli
 
-    - name: Print temp dir location
-      debug:
-        msg: "{{ current_working_directory.stdout }}"
-      tags:
-        - aws_cli
-    
-    - name: Pause for 15 seconds to read current directory
-      pause:
-        seconds: 15
-      tags:
-        - aws_cli
 
-# Openshift oc command
+    # Openshift oc command
     - name: Download the latest oc command
       get_url: 
         url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz"
         dest: "{{ temp_dir.path }}/openshift-client-linux.tar.gz"
+      tags:
+        - oc_client
 
     - name: Install oc into /usr/local/bin
       command: "{{ item }}"
@@ -63,12 +71,17 @@
       with_items:
         - "tar -xvf openshift-client-linux.tar.gz -C /usr/local/bin"
         - "rm -f {{ temp_dir.path }}/openshift-client-linux.tar.gz /usr/local/bin/README.md"
+      tags:
+        - oc_client
 
-# Openshift Installer
+    # Openshift Installer
     - name: Download the latest openshift-install
       get_url:
         url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-install-linux.tar.gz"
         dest: "{{ temp_dir.path }}/openshift-install-linux.tar.gz"
+      tags:
+        - openshift_installer
+
 
     - name: Install openshift-install into /usr/local/bin
       command: "{{ item }}"
@@ -77,17 +90,19 @@
       with_items:
         - "tar -xvf openshift-install-linux.tar.gz -C /usr/local/bin"
         - "rm -f {{ temp_dir.path }}/openshift-install-linux.tar.gz /usr/local/bin/README.md"
+      tags:
+        - openshift_installer
 
-# Helm Tool
+   # Helm Tool
     - name: Download and install the latest Helm tool
       get_url:
         url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/helm/latest/helm-linux-amd64"
         dest: "/usr/local/bin/helm"
         mode: "0555"
+      tags:
+        - helm_cli
 
-
-
-# Install completion scripts
+    # Install completion scripts
     - name: Install completion scripts
       shell: "{{ item }}"
       args:
@@ -96,6 +111,8 @@
         - "/usr/local/bin/oc completion bash > /etc/bash_completion.d/oc-completion"
         - "/usr/local/bin/openshift-install completion bash > /etc/bash_completion.d/openshift-install-completion"
         - "/usr/local/bin/helm completion bash > /etc/bash_completion.d/helm-completion"
+      tags:
+        - completion_scripts
 
 # Post 
   post_tasks:

@@ -11,3 +11,10 @@ Installs:
 - kubectl
 - helm
 
+Prerequisites:
+
+- unzip
+- ansible
+- git
+- python3
+
